@@ -1,0 +1,71 @@
+<!--pages/profile/profile.wxml-->
+<view class="container">
+  <!-- 登录遮罩 -->
+  <view class="login-overlay" wx:if="{{needLogin}}">
+    <view class="login-modal">
+      <view class="login-modal-icon">🔐</view>
+      <view class="login-modal-title">登录打卡挑战</view>
+      <view class="login-modal-desc">请输入手机号码以登录</view>
+      <view class="login-modal-phone">
+        <image src="/assets/phone-icon.png" mode="aspectFit" />
+        <input class="phone-input" type="number" placeholder="请输入手机号" maxlength="11" value="{{phoneNumber}}" bindinput="onPhoneInput" />
+      </view>
+      <button class="login-modal-btn" bindtap="loginWithPhone" disabled="{{!isPhoneValid}}">手机号登录</button>
+      <button class="login-modal-close" bindtap="closeLogin">暂不登录</button>
+    </view>
+  </view>
+
+  <!-- 用户信息 -->
+  <view class="user-header card">
+    <image class="avatar" src="{{avatarUrl || '/assets/default-avatar.png'}}" mode="aspectFill" />
+    <view class="user-info">
+      <text class="nickname">{{nickname || '微信用户'}}</text>
+      <text class="user-id">{{userId ? 'ID: ' + userId : '未登录'}}</text>
+    </view>
+    <button class="login-btn" wx:if="{{!userId}}" bindtap="showLogin">登录</button>
+  </view>
+
+  <!-- 统计数据 -->
+  <view class="stats-bar card">
+    <view class="stat">
+      <text class="stat-num">{{createdCount}}</text>
+      <text class="stat-label">创建</text>
+    </view>
+    <view class="stat">
+      <text class="stat-num">{{joinedCount}}</text>
+      <text class="stat-label">参与</text>
+    </view>
+    <view class="stat">
+      <text class="stat-num">{{totalCheckins}}</text>
+      <text class="stat-label">打卡</text>
+    </view>
+  </view>
+
+  <!-- 我创建的挑战 -->
+  <view class="section card">
+    <view class="section-title">我创建的</view>
+    <block wx:for="{{createdChallenges}}" wx:key="_id">
+      <view class="challenge-item" bindtap="goToDetail" data-challenge="{{item}}">
+        <text class="item-icon">{{item.icon}}</text>
+        <text class="item-title">{{item.title}}</text>
+        <text class="item-meta">{{item.joinCount}} 人参与</text>
+      </view>
+    </block>
+    <view wx:if="{{createdChallenges.length === 0}}" class="empty-hint">暂无创建</view>
+  </view>
+
+  <!-- 我参与的挑战 -->
+  <view class="section card">
+    <view class="section-title">我参与的</view>
+    <block wx:for="{{joinedChallenges}}" wx:key="_id">
+      <view class="challenge-item" bindtap="goToDetail" data-challenge="{{item.challenge}}">
+        <text class="item-icon">{{item.challenge.icon}}</text>
+        <text class="item-title">{{item.challenge.title}}</text>
+        <view class="item-progress">
+          <text class="item-days">Day {{item.currentDay}}/{{item.challenge.dailyLimit}}</text>
+        </view>
+      </view>
+    </block>
+    <view wx:if="{{joinedChallenges.length === 0}}" class="empty-hint">暂无参与</view>
+  </view>
+</view>
