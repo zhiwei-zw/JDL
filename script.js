@@ -98,54 +98,6 @@ const statKeywords = $('#statKeywords')
 const statNumbers = $('#statNumbers')
 const statCoverage = $('#statCoverage')
 
-const resumeTemplates = {
-  student: {
-    role: '产品运营实习生',
-    years: '应届生',
-    resume: `教育经历：某某大学 市场营销 本科
-校园经历：担任学院新媒体负责人，负责公众号选题、推文排版和活动宣传，累计发布 40 篇内容，单篇最高阅读量 3000+。
-项目经历：参与校园社团招新活动，负责用户调研、报名表单、社群答疑和数据复盘，最终报名人数较上一届提升 35%。
-技能：内容运营、活动策划、数据复盘、社群运营、沟通协作、执行力。`,
-    jd: `岗位职责：
-1. 协助完成内容运营、用户运营和活动执行。
-2. 参与用户调研、数据整理和活动复盘。
-3. 配合团队完成社群维护和转化提升。
-任职要求：
-1. 具备良好的沟通能力和执行力。
-2. 有校园活动、公众号、社群或内容运营经验优先。`
-  },
-  tech: {
-    role: '前端开发工程师',
-    years: '1-3年',
-    resume: `技能：JavaScript、TypeScript、Vue、React、Vite、Node.js、Git、性能优化。
-项目经历：负责企业后台系统核心页面开发，完成权限管理、表格筛选、数据看板和导出功能。
-项目难点：列表数据量较大导致首屏加载慢，通过接口分页、组件懒加载和缓存策略优化，首屏加载时间降低 32%。
-协作经历：参与需求评审、接口联调和线上问题排查，沉淀 8 个通用业务组件。`,
-    jd: `岗位职责：
-1. 负责 Web 前端业务开发，参与需求评审和技术方案设计。
-2. 使用 Vue 或 React 完成页面开发，关注性能和体验。
-3. 与后端协作完成接口联调和线上问题处理。
-任职要求：
-1. 熟悉 JavaScript、TypeScript、HTML、CSS。
-2. 有工程化、组件化、性能优化经验优先。`
-  },
-  ops: {
-    role: '用户运营专员',
-    years: '1-3年',
-    resume: `工作经历：负责社群运营、活动策划和用户转化，维护 12 个核心用户群。
-项目经历：策划新用户激活活动，完成活动方案、物料准备、社群触达和数据复盘，活动参与人数 5200+，新用户转化率提升 18%。
-数据复盘：围绕拉新、转化、留存拆解指标，每周输出运营日报，推动话术和活动节奏优化。
-技能：用户运营、活动策划、社群运营、数据分析、SOP、沟通协作。`,
-    jd: `岗位职责：
-1. 负责用户运营、社群维护和活动执行。
-2. 跟踪拉新、转化、留存等核心指标并进行复盘。
-3. 协同内容、产品和销售团队提升用户转化。
-任职要求：
-1. 有社群、活动或用户运营经验。
-2. 具备数据分析、沟通协作和执行落地能力。`
-  }
-}
-
 function normalizeText(text) {
   return String(text || '').replace(/\s+/g, ' ').trim()
 }
@@ -608,19 +560,6 @@ function loadSample() {
   showToast('示例已载入')
 }
 
-function applyTemplate(name) {
-  const template = resumeTemplates[name]
-  if (!template) return
-  roleInput.value = template.role
-  yearsInput.value = template.years
-  resumeInput.value = template.resume
-  jdInput.value = template.jd
-  updateInputStats()
-  runTool()
-  document.querySelector('#tools').scrollIntoView({ behavior: 'smooth', block: 'start' })
-  showToast('模板已套用')
-}
-
 function clearHistory() {
   writeHistory([])
   renderHistory()
@@ -652,10 +591,6 @@ historyList.addEventListener('click', (event) => {
   const button = event.target.closest('[data-history-index]')
   if (!button) return
   restoreHistory(Number(button.dataset.historyIndex))
-})
-
-$$('.template-button').forEach((button) => {
-  button.addEventListener('click', () => applyTemplate(button.dataset.template))
 })
 
 switchTool('score')
