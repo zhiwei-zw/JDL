@@ -1,7 +1,0 @@
-{
-  "description": "小程序sitemap配置文件",
-  "rules": [{
-    "action": "allow",
-    "page": "*"
-  }]
-}

@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="求职工具站，提供简历评分、岗位匹配、自我评价生成、项目经历优化和面试题生成。"
+    />
+    <title>求职简历助手 | 简历评分、岗位匹配、面试准备</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="求职简历助手首页">
+        <span class="brand-mark">CV</span>
+        <span>求职简历助手</span>
+      </a>
+      <nav class="top-nav" aria-label="主要导航">
+        <a href="#tools">工具台</a>
+        <a href="#templates">模板库</a>
+        <a href="#pricing">商业化</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="intro-band" aria-label="求职工具概览">
+        <div class="intro-copy">
+          <p class="eyebrow">本地运行 · 免费试用 · 不上传简历</p>
+          <h1>求职简历助手</h1>
+          <p class="intro-text">
+            面向应届生、转行求职和职场跳槽用户，提供简历体检、JD 匹配、项目优化和面试准备工具。
+          </p>
+          <div class="intro-actions">
+            <a class="primary-link" href="#tools">开始优化</a>
+            <button class="text-button" id="loadSampleBtn" type="button">载入示例</button>
+          </div>
+        </div>
+        <div class="visual-wrap" aria-hidden="true">
+          <img src="./assets/workspace-visual.png" alt="" />
+        </div>
+      </section>
+
+      <section id="tools" class="tool-shell" aria-label="求职工具台">
+        <div class="tool-tabs" role="tablist" aria-label="工具切换">
+          <button class="tab active" type="button" data-tool="score" role="tab" aria-selected="true">简历评分</button>
+          <button class="tab" type="button" data-tool="match" role="tab" aria-selected="false">岗位匹配</button>
+          <button class="tab" type="button" data-tool="summary" role="tab" aria-selected="false">自我评价</button>
+          <button class="tab" type="button" data-tool="project" role="tab" aria-selected="false">项目经历</button>
+          <button class="tab" type="button" data-tool="interview" role="tab" aria-selected="false">面试题</button>
+        </div>
+
+        <div class="workspace">
+          <section class="input-panel" aria-label="输入内容">
+            <div class="tool-heading">
+              <div>
+                <p class="eyebrow">当前工具</p>
+                <h2 id="toolTitle">简历评分</h2>
+              </div>
+              <span class="privacy-pill">浏览器本地处理</span>
+            </div>
+
+            <div class="form-grid">
+              <label class="field">
+                <span>目标岗位</span>
+                <input id="roleInput" type="text" placeholder="例如：前端开发工程师 / 产品运营 / Java 后端" />
+              </label>
+              <label class="field">
+                <span>工作年限</span>
+                <select id="yearsInput">
+                  <option value="应届生">应届生</option>
+                  <option value="1-3年">1-3年</option>
+                  <option value="3-5年">3-5年</option>
+                  <option value="5年以上">5年以上</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="field full-field">
+              <span id="mainInputLabel">简历内容</span>
+              <textarea
+                id="resumeInput"
+                rows="12"
+                placeholder="粘贴简历文本：教育经历、工作经历、项目经历、技能、证书等。"
+              ></textarea>
+            </label>
+
+            <label class="field full-field jd-field" id="jdField">
+              <span>岗位 JD / 招聘要求</span>
+              <textarea
+                id="jdInput"
+                rows="8"
+                placeholder="粘贴目标岗位 JD，用于匹配关键词、能力要求和面试题。"
+              ></textarea>
+            </label>
+
+            <div class="quick-row" id="quickOptions">
+              <button type="button" class="chip" data-role="前端开发工程师">前端开发</button>
+              <button type="button" class="chip" data-role="Java 后端工程师">Java 后端</button>
+              <button type="button" class="chip" data-role="产品经理">产品经理</button>
+              <button type="button" class="chip" data-role="运营专员">运营</button>
+            </div>
+
+            <div class="action-row">
+              <button class="primary-button" id="runBtn" type="button">
+                <span class="button-icon">↗</span>
+                <span>生成结果</span>
+              </button>
+              <button class="secondary-button" id="clearBtn" type="button">清空</button>
+            </div>
+          </section>
+
+          <aside class="result-panel" aria-label="分析结果">
+            <div class="result-header">
+              <div>
+                <p class="eyebrow">输出结果</p>
+                <h2 id="resultTitle">简历体检报告</h2>
+              </div>
+              <button class="download-button" id="downloadBtn" type="button" disabled>下载文本</button>
+            </div>
+
+            <div class="score-box">
+              <div class="score-ring" id="scoreRing" style="--score: 0">
+                <span id="scoreValue">--</span>
+              </div>
+              <div>
+                <strong id="scoreLabel">等待分析</strong>
+                <p id="scoreNote">输入简历后生成结构化建议。</p>
+              </div>
+            </div>
+
+            <div class="result-content" id="resultContent">
+              <div class="empty-state">
+                <strong>还没有结果</strong>
+                <p>选择工具后输入内容，点击生成结果即可查看建议。</p>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="templates" class="section-block" aria-label="模板库">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">后续可扩展</p>
+            <h2>简历模板库</h2>
+          </div>
+          <p>适合后续做 SEO 和付费下载的内容入口。</p>
+        </div>
+        <div class="template-grid">
+          <article class="template-card">
+            <span class="template-type">应届生</span>
+            <h3>校园经历强化模板</h3>
+            <p>突出课程项目、竞赛、实习和可迁移能力。</p>
+          </article>
+          <article class="template-card">
+            <span class="template-type green">技术岗</span>
+            <h3>项目成果量化模板</h3>
+            <p>按技术栈、职责、难点、结果组织项目经历。</p>
+          </article>
+          <article class="template-card">
+            <span class="template-type amber">运营岗</span>
+            <h3>数据增长表达模板</h3>
+            <p>围绕拉新、转化、留存、活动效果沉淀亮点。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="pricing" class="section-block pricing-block" aria-label="商业化方案">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">商业化路径</p>
+            <h2>先免费工具，再做付费能力</h2>
+          </div>
+          <p>第一版用免费工具获取流量，后续增加 PDF 导出、精品模板和 AI 深度优化。</p>
+        </div>
+        <div class="plan-grid">
+          <article class="plan-card">
+            <h3>免费版</h3>
+            <p class="price">0 元</p>
+            <ul>
+              <li>简历评分</li>
+              <li>岗位匹配</li>
+              <li>面试题生成</li>
+            </ul>
+          </article>
+          <article class="plan-card featured">
+            <h3>模板包</h3>
+            <p class="price">9.9 元起</p>
+            <ul>
+              <li>精品简历模板</li>
+              <li>项目表达模板</li>
+              <li>岗位关键词清单</li>
+            </ul>
+          </article>
+          <article class="plan-card">
+            <h3>AI 优化</h3>
+            <p class="price">后续接入</p>
+            <ul>
+              <li>大模型润色</li>
+              <li>PDF 简历导出</li>
+              <li>多岗位版本管理</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>求职简历助手</span>
+      <span>当前版本不上传用户简历，适合免费托管和低成本验证。</span>
+    </footer>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
