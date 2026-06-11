@@ -5,10 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="求职工具站，提供简历评分、岗位匹配、自我评价生成、项目经历优化和面试题生成。"
+      content="免费求职简历助手，支持简历评分、岗位 JD 匹配、自我评价生成、项目经历优化和面试题生成，浏览器本地处理，不上传简历。"
     />
-    <title>求职简历助手 | 简历评分、岗位匹配、面试准备</title>
+    <meta name="keywords" content="简历优化,简历评分,岗位匹配,JD匹配,自我评价,项目经历优化,面试题生成,求职工具" />
+    <meta name="theme-color" content="#1677ff" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="求职简历助手 | 免费简历优化与岗位匹配工具" />
+    <meta property="og:description" content="浏览器本地处理简历内容，免费生成简历评分、JD 匹配、项目经历优化和面试准备清单。" />
+    <meta property="og:image" content="https://zhiwei-zw.github.io/JDL/assets/workspace-visual.png" />
+    <meta property="og:url" content="https://zhiwei-zw.github.io/JDL/" />
+    <link rel="canonical" href="https://zhiwei-zw.github.io/JDL/" />
+    <title>求职简历助手 | 免费简历优化、岗位匹配、面试准备</title>
     <link rel="stylesheet" href="./styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "求职简历助手",
+        "url": "https://zhiwei-zw.github.io/JDL/",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "description": "免费求职工具，支持简历评分、岗位 JD 匹配、自我评价生成、项目经历优化和面试题生成。",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "CNY"
+        }
+      }
+    </script>
   </head>
   <body>
     <header class="site-header">
@@ -19,18 +43,23 @@
       <nav class="top-nav" aria-label="主要导航">
         <a href="#tools">工具台</a>
         <a href="#templates">模板库</a>
-        <a href="#pricing">商业化</a>
+        <a href="#faq">常见问题</a>
       </nav>
     </header>
 
     <main id="top">
       <section class="intro-band" aria-label="求职工具概览">
         <div class="intro-copy">
-          <p class="eyebrow">本地运行 · 免费试用 · 不上传简历</p>
-          <h1>求职简历助手</h1>
+          <p class="eyebrow">免费使用 · 本地处理 · 不上传简历</p>
+          <h1>简历优化助手</h1>
           <p class="intro-text">
-            面向应届生、转行求职和职场跳槽用户，提供简历体检、JD 匹配、项目优化和面试准备工具。
+            面向应届生、转行求职和职场跳槽用户，提供简历体检、JD 匹配、项目优化和面试准备工具。先把简历写清楚，再提高投递命中率。
           </p>
+          <div class="intro-metrics" aria-label="工具亮点">
+            <span><strong>5</strong> 个求职工具</span>
+            <span><strong>免费</strong> 直接使用</span>
+            <span><strong>本地</strong> 处理文本</span>
+          </div>
           <div class="intro-actions">
             <a class="primary-link" href="#tools">开始优化</a>
             <button class="text-button" id="loadSampleBtn" type="button">载入示例</button>
@@ -94,6 +123,13 @@
               ></textarea>
             </label>
 
+            <div class="input-stats" id="inputStats" aria-label="输入质量指标">
+              <span>字数 <strong id="statChars">0</strong></span>
+              <span>关键词 <strong id="statKeywords">0</strong></span>
+              <span>量化表达 <strong id="statNumbers">0</strong></span>
+              <span>JD 覆盖 <strong id="statCoverage">--</strong></span>
+            </div>
+
             <div class="quick-row" id="quickOptions">
               <button type="button" class="chip" data-role="前端开发工程师">前端开发</button>
               <button type="button" class="chip" data-role="Java 后端工程师">Java 后端</button>
@@ -116,7 +152,10 @@
                 <p class="eyebrow">输出结果</p>
                 <h2 id="resultTitle">简历体检报告</h2>
               </div>
-              <button class="download-button" id="downloadBtn" type="button" disabled>下载文本</button>
+              <div class="result-actions">
+                <button class="download-button" id="copyBtn" type="button" disabled>复制结果</button>
+                <button class="download-button" id="downloadBtn" type="button" disabled>下载文本</button>
+              </div>
             </div>
 
             <div class="score-box">
@@ -135,72 +174,97 @@
                 <p>选择工具后输入内容，点击生成结果即可查看建议。</p>
               </div>
             </div>
+
+            <div class="history-box" aria-label="本地历史记录">
+              <div class="history-head">
+                <strong>本地历史</strong>
+                <button class="text-button small-button" id="clearHistoryBtn" type="button">清空</button>
+              </div>
+              <div class="history-list" id="historyList">
+                <span class="history-empty">生成结果后会自动保存到本机浏览器。</span>
+              </div>
+            </div>
           </aside>
+        </div>
+      </section>
+
+      <section class="section-block" aria-label="适合人群">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">使用场景</p>
+            <h2>先解决最影响投递的问题</h2>
+          </div>
+          <p>适合投递前快速自查，帮助你把简历结构、关键词和表达方式先调到更清楚的状态。</p>
+        </div>
+        <div class="template-grid">
+          <article class="template-card">
+            <span class="template-type">应届求职</span>
+            <h3>经历少也能写清价值</h3>
+            <p>把课程项目、竞赛、实习拆成背景、行动、结果，减少空泛自我评价。</p>
+          </article>
+          <article class="template-card">
+            <span class="template-type green">转行跳槽</span>
+            <h3>突出可迁移能力</h3>
+            <p>围绕目标岗位重排关键词，让旧经历更容易被招聘方理解。</p>
+          </article>
+          <article class="template-card">
+            <span class="template-type amber">面试准备</span>
+            <h3>提前准备追问</h3>
+            <p>根据简历和 JD 生成高频问题，避免面试时只会复述简历。</p>
+          </article>
         </div>
       </section>
 
       <section id="templates" class="section-block" aria-label="模板库">
         <div class="section-head">
           <div>
-            <p class="eyebrow">后续可扩展</p>
-            <h2>简历模板库</h2>
+            <p class="eyebrow">快速开始</p>
+            <h2>套用简历模板</h2>
           </div>
-          <p>适合后续做 SEO 和付费下载的内容入口。</p>
+          <p>不知道怎么写时，可以先套用模板，再替换成自己的真实经历。</p>
         </div>
         <div class="template-grid">
           <article class="template-card">
             <span class="template-type">应届生</span>
             <h3>校园经历强化模板</h3>
             <p>突出课程项目、竞赛、实习和可迁移能力。</p>
+            <button class="template-button" type="button" data-template="student">套用模板</button>
           </article>
           <article class="template-card">
             <span class="template-type green">技术岗</span>
             <h3>项目成果量化模板</h3>
             <p>按技术栈、职责、难点、结果组织项目经历。</p>
+            <button class="template-button" type="button" data-template="tech">套用模板</button>
           </article>
           <article class="template-card">
             <span class="template-type amber">运营岗</span>
             <h3>数据增长表达模板</h3>
             <p>围绕拉新、转化、留存、活动效果沉淀亮点。</p>
+            <button class="template-button" type="button" data-template="ops">套用模板</button>
           </article>
         </div>
       </section>
 
-      <section id="pricing" class="section-block pricing-block" aria-label="商业化方案">
+      <section id="faq" class="section-block faq-block" aria-label="常见问题">
         <div class="section-head">
           <div>
-            <p class="eyebrow">商业化路径</p>
-            <h2>先免费工具，再做付费能力</h2>
+            <p class="eyebrow">常见问题</p>
+            <h2>使用前可以先了解</h2>
           </div>
-          <p>第一版用免费工具获取流量，后续增加 PDF 导出、精品模板和 AI 深度优化。</p>
+          <p>当前工具适合简历初筛自查，最终投递结果仍需要结合岗位要求和面试表现判断。</p>
         </div>
-        <div class="plan-grid">
-          <article class="plan-card">
-            <h3>免费版</h3>
-            <p class="price">0 元</p>
-            <ul>
-              <li>简历评分</li>
-              <li>岗位匹配</li>
-              <li>面试题生成</li>
-            </ul>
+        <div class="faq-grid">
+          <article class="faq-item">
+            <h3>简历内容会上传吗？</h3>
+            <p>当前版本在浏览器本地运行，不需要登录，不会把简历文本上传到服务器。</p>
           </article>
-          <article class="plan-card featured">
-            <h3>模板包</h3>
-            <p class="price">9.9 元起</p>
-            <ul>
-              <li>精品简历模板</li>
-              <li>项目表达模板</li>
-              <li>岗位关键词清单</li>
-            </ul>
+          <article class="faq-item">
+            <h3>评分是否等于真实录用概率？</h3>
+            <p>不是。评分用于检查完整度、关键词、量化结果和表达结构，真实结果还取决于岗位、公司和面试表现。</p>
           </article>
-          <article class="plan-card">
-            <h3>AI 优化</h3>
-            <p class="price">后续接入</p>
-            <ul>
-              <li>大模型润色</li>
-              <li>PDF 简历导出</li>
-              <li>多岗位版本管理</li>
-            </ul>
+          <article class="faq-item">
+            <h3>没有岗位 JD 可以用吗？</h3>
+            <p>可以先用“简历评分”和“自我评价”。如果要做岗位匹配、项目优化或面试题，建议粘贴目标岗位 JD。</p>
           </article>
         </div>
       </section>
@@ -208,9 +272,10 @@
 
     <footer class="site-footer">
       <span>求职简历助手</span>
-      <span>当前版本不上传用户简历，适合免费托管和低成本验证。</span>
+      <span>简历内容仅在当前浏览器中处理，不会上传到服务器。</span>
     </footer>
 
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="./script.js"></script>
   </body>
 </html>

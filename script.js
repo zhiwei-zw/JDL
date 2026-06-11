@@ -3,6 +3,8 @@ const state = {
   lastOutput: ''
 }
 
+const HISTORY_KEY = 'career-tools-history'
+
 const toolMeta = {
   score: {
     title: '简历评分',
@@ -44,7 +46,7 @@ const skillDict = {
   ],
   产品: [
     '需求分析', '用户调研', '竞品分析', '原型', 'Axure', 'Figma', 'PRD', '数据分析',
-    '增长', '转化率', '留存', 'A/B测试', '项目管理', '用户体验', '商业化'
+    '增长', '转化率', '留存', 'A/B测试', '项目管理', '用户体验'
   ],
   运营: [
     '内容运营', '用户运营', '活动策划', '社群', '私域', '增长', '转化', '留存',
@@ -88,6 +90,61 @@ const scoreRing = $('#scoreRing')
 const scoreLabel = $('#scoreLabel')
 const scoreNote = $('#scoreNote')
 const downloadBtn = $('#downloadBtn')
+const copyBtn = $('#copyBtn')
+const historyList = $('#historyList')
+const toast = $('#toast')
+const statChars = $('#statChars')
+const statKeywords = $('#statKeywords')
+const statNumbers = $('#statNumbers')
+const statCoverage = $('#statCoverage')
+
+const resumeTemplates = {
+  student: {
+    role: '产品运营实习生',
+    years: '应届生',
+    resume: `教育经历：某某大学 市场营销 本科
+校园经历：担任学院新媒体负责人，负责公众号选题、推文排版和活动宣传，累计发布 40 篇内容，单篇最高阅读量 3000+。
+项目经历：参与校园社团招新活动，负责用户调研、报名表单、社群答疑和数据复盘，最终报名人数较上一届提升 35%。
+技能：内容运营、活动策划、数据复盘、社群运营、沟通协作、执行力。`,
+    jd: `岗位职责：
+1. 协助完成内容运营、用户运营和活动执行。
+2. 参与用户调研、数据整理和活动复盘。
+3. 配合团队完成社群维护和转化提升。
+任职要求：
+1. 具备良好的沟通能力和执行力。
+2. 有校园活动、公众号、社群或内容运营经验优先。`
+  },
+  tech: {
+    role: '前端开发工程师',
+    years: '1-3年',
+    resume: `技能：JavaScript、TypeScript、Vue、React、Vite、Node.js、Git、性能优化。
+项目经历：负责企业后台系统核心页面开发，完成权限管理、表格筛选、数据看板和导出功能。
+项目难点：列表数据量较大导致首屏加载慢，通过接口分页、组件懒加载和缓存策略优化，首屏加载时间降低 32%。
+协作经历：参与需求评审、接口联调和线上问题排查，沉淀 8 个通用业务组件。`,
+    jd: `岗位职责：
+1. 负责 Web 前端业务开发，参与需求评审和技术方案设计。
+2. 使用 Vue 或 React 完成页面开发，关注性能和体验。
+3. 与后端协作完成接口联调和线上问题处理。
+任职要求：
+1. 熟悉 JavaScript、TypeScript、HTML、CSS。
+2. 有工程化、组件化、性能优化经验优先。`
+  },
+  ops: {
+    role: '用户运营专员',
+    years: '1-3年',
+    resume: `工作经历：负责社群运营、活动策划和用户转化，维护 12 个核心用户群。
+项目经历：策划新用户激活活动，完成活动方案、物料准备、社群触达和数据复盘，活动参与人数 5200+，新用户转化率提升 18%。
+数据复盘：围绕拉新、转化、留存拆解指标，每周输出运营日报，推动话术和活动节奏优化。
+技能：用户运营、活动策划、社群运营、数据分析、SOP、沟通协作。`,
+    jd: `岗位职责：
+1. 负责用户运营、社群维护和活动执行。
+2. 跟踪拉新、转化、留存等核心指标并进行复盘。
+3. 协同内容、产品和销售团队提升用户转化。
+任职要求：
+1. 有社群、活动或用户运营经验。
+2. 具备数据分析、沟通协作和执行落地能力。`
+  }
+}
 
 function normalizeText(text) {
   return String(text || '').replace(/\s+/g, ' ').trim()
@@ -121,6 +178,85 @@ function extractKeywords(text) {
 function extractNumbers(text) {
   const matches = String(text || '').match(/\d+(\.\d+)?%?|\d+(\.\d+)?万?/g)
   return matches ? matches.slice(0, 12) : []
+}
+
+function showToast(message) {
+  if (!toast) return
+  toast.textContent = message
+  toast.classList.add('show')
+  window.clearTimeout(showToast.timer)
+  showToast.timer = window.setTimeout(() => {
+    toast.classList.remove('show')
+  }, 1800)
+}
+
+function updateInputStats() {
+  const resume = resumeInput.value.trim()
+  const jd = jdInput.value.trim()
+  const resumeKeywords = extractKeywords(resume)
+  const jdKeywords = extractKeywords(jd)
+  const matched = jdKeywords.filter((word) => resumeKeywords.includes(word))
+  const coverage = jdKeywords.length ? `${Math.round((matched.length / jdKeywords.length) * 100)}%` : '--'
+
+  statChars.textContent = String(resume.length)
+  statKeywords.textContent = String(resumeKeywords.length)
+  statNumbers.textContent = String(extractNumbers(resume).length)
+  statCoverage.textContent = coverage
+}
+
+function readHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')
+  } catch (error) {
+    return []
+  }
+}
+
+function writeHistory(items) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, 8)))
+  } catch (error) {
+    // localStorage can be unavailable in private browsing modes.
+  }
+}
+
+function renderHistory() {
+  const items = readHistory()
+  if (!items.length) {
+    historyList.innerHTML = '<span class="history-empty">生成结果后会自动保存到本机浏览器。</span>'
+    return
+  }
+
+  historyList.innerHTML = items.map((item, index) => {
+    return `<button class="history-item" type="button" data-history-index="${index}">
+      <span>${escapeHtml(item.title)}</span>
+      <small>${escapeHtml(item.time)}</small>
+    </button>`
+  }).join('')
+}
+
+function saveHistory(title, text) {
+  const now = new Date()
+  const item = {
+    title,
+    text,
+    score: Number(scoreValue.textContent) || null,
+    time: `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  }
+  const items = readHistory().filter((historyItem) => historyItem.text !== text)
+  writeHistory([item, ...items])
+  renderHistory()
+}
+
+function restoreHistory(index) {
+  const item = readHistory()[index]
+  if (!item) return
+  state.lastOutput = item.text
+  $('#resultTitle').textContent = item.title
+  updateScore(item.score, '已恢复历史结果', '这是保存在当前浏览器里的历史记录。')
+  resultContent.innerHTML = `<section class="result-section"><h3>${escapeHtml(item.title)}</h3><p class="generated-text">${escapeHtml(item.text)}</p></section>`
+  downloadBtn.disabled = false
+  copyBtn.disabled = false
 }
 
 function scoreResume(text) {
@@ -234,7 +370,7 @@ function buildSummary(role, years, text) {
   const skillText = keywords.length ? keywords.join('、') : '岗位相关技能'
   const resultText = nums.length ? `曾在项目中沉淀 ${nums.join('、')} 等可量化成果，` : ''
 
-  return `本人面向${roleName}方向，具备${years}相关学习或实践经验，熟悉${skillText}。${resultText}能够围绕业务目标拆解任务，推进需求落地，并在执行过程中持续复盘优化。希望在后续工作中结合岗位场景提升专业深度，为团队交付稳定、可衡量的结果。`
+  return `本人面向${roleName}方向，具备${years}相关学习或实践经验，熟悉${skillText}。${resultText}能够围绕业务目标拆解任务，推进需求落地，并在执行过程中持续复盘优化。希望在未来工作中结合岗位场景提升专业深度，为团队交付稳定、可衡量的结果。`
 }
 
 function optimizeProject(role, projectText, jd) {
@@ -398,6 +534,8 @@ function runTool() {
 function saveOutput(title, sections) {
   state.lastOutput = collectOutputText(title, sections)
   downloadBtn.disabled = false
+  copyBtn.disabled = false
+  saveHistory(title, state.lastOutput)
 }
 
 function showEmpty(title, note) {
@@ -405,6 +543,7 @@ function showEmpty(title, note) {
   resultContent.innerHTML = `<div class="empty-state"><strong>${escapeHtml(title)}</strong><p>${escapeHtml(note)}</p></div>`
   state.lastOutput = ''
   downloadBtn.disabled = true
+  copyBtn.disabled = true
 }
 
 function switchTool(tool) {
@@ -433,6 +572,22 @@ function downloadOutput() {
   link.click()
   link.remove()
   URL.revokeObjectURL(url)
+  showToast('文本已下载')
+}
+
+async function copyOutput() {
+  if (!state.lastOutput) return
+  try {
+    await navigator.clipboard.writeText(state.lastOutput)
+  } catch (error) {
+    const helper = document.createElement('textarea')
+    helper.value = state.lastOutput
+    document.body.appendChild(helper)
+    helper.select()
+    document.execCommand('copy')
+    helper.remove()
+  }
+  showToast('结果已复制')
 }
 
 function clearInputs() {
@@ -440,6 +595,7 @@ function clearInputs() {
   jdInput.value = ''
   roleInput.value = ''
   showEmpty('还没有结果', '选择工具后输入内容，点击生成结果即可查看建议。')
+  updateInputStats()
 }
 
 function loadSample() {
@@ -447,9 +603,28 @@ function loadSample() {
   yearsInput.value = '应届生'
   resumeInput.value = sampleResume
   jdInput.value = sampleJd
-  if (state.activeTool === 'score') {
-    runTool()
-  }
+  updateInputStats()
+  runTool()
+  showToast('示例已载入')
+}
+
+function applyTemplate(name) {
+  const template = resumeTemplates[name]
+  if (!template) return
+  roleInput.value = template.role
+  yearsInput.value = template.years
+  resumeInput.value = template.resume
+  jdInput.value = template.jd
+  updateInputStats()
+  runTool()
+  document.querySelector('#tools').scrollIntoView({ behavior: 'smooth', block: 'start' })
+  showToast('模板已套用')
+}
+
+function clearHistory() {
+  writeHistory([])
+  renderHistory()
+  showToast('历史已清空')
 }
 
 $$('.tab').forEach((tab) => {
@@ -459,12 +634,30 @@ $$('.tab').forEach((tab) => {
 $$('.chip').forEach((chip) => {
   chip.addEventListener('click', () => {
     roleInput.value = chip.dataset.role
+    updateInputStats()
   })
 })
 
 $('#runBtn').addEventListener('click', runTool)
 $('#clearBtn').addEventListener('click', clearInputs)
 $('#downloadBtn').addEventListener('click', downloadOutput)
+$('#copyBtn').addEventListener('click', copyOutput)
 $('#loadSampleBtn').addEventListener('click', loadSample)
+$('#clearHistoryBtn').addEventListener('click', clearHistory)
+
+resumeInput.addEventListener('input', updateInputStats)
+jdInput.addEventListener('input', updateInputStats)
+
+historyList.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-history-index]')
+  if (!button) return
+  restoreHistory(Number(button.dataset.historyIndex))
+})
+
+$$('.template-button').forEach((button) => {
+  button.addEventListener('click', () => applyTemplate(button.dataset.template))
+})
 
 switchTool('score')
+updateInputStats()
+renderHistory()
