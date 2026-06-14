@@ -56,6 +56,17 @@ server/data/jdl.sqlite
 SQLITE_PATH=/data/jdl.sqlite npm start
 ```
 
+## Docker 部署
+
+仓库已包含 `Dockerfile`，可以直接构建容器：
+
+```text
+docker build -t jdl-resume-assistant .
+docker run -p 8787:8787 -v jdl-data:/app/server/data jdl-resume-assistant
+```
+
+如果部署到云平台，建议挂载持久化磁盘到 `/app/server/data`，这样 SQLite 数据库不会在重新部署后丢失。
+
 ## API
 
 - `GET /api/health`：服务健康检查。
