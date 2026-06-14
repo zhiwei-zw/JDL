@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
-import { existsSync } from "node:fs";
-import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { existsSync, mkdirSync } from "node:fs";
+import { readFile, stat } from "node:fs/promises";
+import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -10,7 +11,7 @@ const projectRoot = path.resolve(__dirname, "..");
 const distRoot = path.join(projectRoot, "dist");
 const staticRoot = existsSync(path.join(distRoot, "index.html")) ? distRoot : projectRoot;
 const dataDir = path.join(__dirname, "data");
-const historyFile = path.join(dataDir, "history.json");
+const databaseFile = path.resolve(process.env.SQLITE_PATH || path.join(dataDir, "jdl.sqlite"));
 const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || "0.0.0.0";
 
@@ -21,6 +22,40 @@ const toolLabels = {
   project: "项目经历",
   interview: "面试题",
 };
+
+function openDatabase() {
+  mkdirSync(path.dirname(databaseFile), { recursive: true });
+  const db = new DatabaseSync(databaseFile);
+  db.exec(`
+    PRAGMA journal_mode = WAL;
+    PRAGMA foreign_keys = ON;
+
+    CREATE TABLE IF NOT EXISTS sessions (
+      id TEXT PRIMARY KEY,
+      created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+    );
+
+    CREATE TABLE IF NOT EXISTS history (
+      id TEXT PRIMARY KEY,
+      session_id TEXT NOT NULL,
+      tool_id TEXT NOT NULL,
+      tool TEXT NOT NULL,
+      target TEXT NOT NULL,
+      score INTEGER NOT NULL,
+      created_at TEXT NOT NULL,
+      created_at_ms INTEGER NOT NULL,
+      report_json TEXT NOT NULL,
+      FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_history_session_time
+      ON history(session_id, created_at_ms DESC);
+  `);
+  return db;
+}
+
+const db = openDatabase();
 
 const fallbackProject = `校园二手交易平台
 背景：校内闲置物品交易效率低，信息分散。
@@ -199,44 +234,87 @@ function getSessionId(req) {
   return raw.replace(/[^\w.-]/g, "").slice(0, 80) || "anonymous";
 }
 
-async function readHistory() {
-  try {
-    const raw = await readFile(historyFile, "utf8");
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+function touchSession(sessionId) {
+  db.prepare(`
+    INSERT INTO sessions (id, created_at, updated_at)
+    VALUES (?, datetime('now', 'localtime'), datetime('now', 'localtime'))
+    ON CONFLICT(id) DO UPDATE SET updated_at = datetime('now', 'localtime')
+  `).run(sessionId);
 }
 
-async function writeHistory(items) {
-  await mkdir(dataDir, { recursive: true });
-  await writeFile(historyFile, JSON.stringify(items.slice(0, 500), null, 2), "utf8");
+function readHistory(sessionId) {
+  touchSession(sessionId);
+  return db.prepare(`
+    SELECT
+      id,
+      tool_id AS toolId,
+      tool,
+      target,
+      score,
+      created_at AS time
+    FROM history
+    WHERE session_id = ?
+    ORDER BY created_at_ms DESC
+    LIMIT 50
+  `).all(sessionId);
 }
 
-function publicHistory(items, sessionId) {
-  return items
-    .filter((item) => item.sessionId === sessionId)
-    .map(({ sessionId: _sessionId, ...item }) => item)
-    .slice(0, 50);
+function trimHistory(sessionId) {
+  db.prepare(`
+    DELETE FROM history
+    WHERE session_id = ?
+      AND id NOT IN (
+        SELECT id FROM history
+        WHERE session_id = ?
+        ORDER BY created_at_ms DESC
+        LIMIT 50
+      )
+  `).run(sessionId, sessionId);
+
+  db.prepare(`
+    DELETE FROM history
+    WHERE id NOT IN (
+      SELECT id FROM history
+      ORDER BY created_at_ms DESC
+      LIMIT 500
+    )
+  `).run();
 }
 
-async function addHistory(sessionId, form, toolId, report) {
-  const history = await readHistory();
-  const entry = {
-    id: crypto.randomUUID(),
+function addHistory(sessionId, form, toolId, report) {
+  touchSession(sessionId);
+  db.prepare(`
+    INSERT INTO history (
+      id,
+      session_id,
+      tool_id,
+      tool,
+      target,
+      score,
+      created_at,
+      created_at_ms,
+      report_json
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    crypto.randomUUID(),
     sessionId,
     toolId,
-    tool: toolLabels[toolId] || "工具",
-    target: form.target || "未填写岗位",
-    score: report.score,
-    time: report.generatedAt,
-  };
-  const own = [entry, ...history.filter((item) => item.sessionId === sessionId)].slice(0, 50);
-  const others = history.filter((item) => item.sessionId !== sessionId);
-  const next = [...own, ...others].slice(0, 500);
-  await writeHistory(next);
-  return publicHistory(next, sessionId);
+    toolLabels[toolId] || "工具",
+    form.target || "未填写岗位",
+    Number(report.score || 0),
+    report.generatedAt,
+    Date.now(),
+    JSON.stringify(report),
+  );
+  trimHistory(sessionId);
+  return readHistory(sessionId);
+}
+
+function clearHistory(sessionId) {
+  touchSession(sessionId);
+  db.prepare("DELETE FROM history WHERE session_id = ?").run(sessionId);
+  return [];
 }
 
 function sendJson(res, statusCode, payload) {
@@ -292,22 +370,19 @@ async function handleApi(req, res, pathname) {
         ok: true,
         service: "jdl-resume-assistant",
         mode: "node-backend",
+        database: "sqlite",
         staticRoot,
       });
       return true;
     }
 
     if (route === "/history" && req.method === "GET") {
-      const history = await readHistory();
-      sendJson(res, 200, { history: publicHistory(history, sessionId) });
+      sendJson(res, 200, { history: readHistory(sessionId) });
       return true;
     }
 
     if (route === "/history" && req.method === "DELETE") {
-      const history = await readHistory();
-      const next = history.filter((item) => item.sessionId !== sessionId);
-      await writeHistory(next);
-      sendJson(res, 200, { ok: true, history: [] });
+      sendJson(res, 200, { ok: true, history: clearHistory(sessionId) });
       return true;
     }
 
@@ -324,7 +399,7 @@ async function handleApi(req, res, pathname) {
         return true;
       }
       const report = buildReport(toolId, form);
-      const history = await addHistory(sessionId, form, toolId, report);
+      const history = addHistory(sessionId, form, toolId, report);
       sendJson(res, 200, { report, history });
       return true;
     }
@@ -386,6 +461,24 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://${req.headers.host || "127.0.0.1"}`);
   const handled = await handleApi(req, res, url.pathname);
   if (!handled) await serveStatic(req, res, url.pathname);
+});
+
+function closeDatabase() {
+  try {
+    db.close();
+  } catch {
+    // The process is already exiting; there is nothing useful to recover here.
+  }
+}
+
+process.on("SIGINT", () => {
+  closeDatabase();
+  process.exit(0);
+});
+
+process.on("SIGTERM", () => {
+  closeDatabase();
+  process.exit(0);
 });
 
 server.listen(port, host, () => {
